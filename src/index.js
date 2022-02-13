@@ -10,71 +10,126 @@ const port = process.env.PORT || 3000
 //check its functioning
 app.use(express.json())
 
-app.post('/users',(req, res)=>{
+
+
+app.post('/users',async (req, res)=>{
     const user = new User(req.body)
-    user.save().then((result)=>{
-                    res.status(201).send(result)
-                })
-                .catch((e)=>{
-                    res.status(400).send(e)
-                })
+
+    try{
+        await user.save()
+        res.status(201).send(user)
+    }   
+    catch (e){
+        res.status(400).send(e)
+    }
+
+    // user.save().then((result)=>{
+    //                 res.status(201).send(result)
+    //             })
+    //             .catch((e)=>{
+    //                 res.status(400).send(e)
+    //             })
+
     //cant send 2 response to the user only 1 response per request
    // res.send('testing')
 })
 
-app.get('/users',(req,res)=>{
-    User.find({}).then((result)=>{
-            res.status(200).send(result)
-        }).catch((e)=>{
-            res.status(500).send(e)
-        })
+
+app.get('/users',async (req,res)=>{
+
+    try{
+        await User.find({})
+        res.status(200).send(User)
+    }
+    catch (e){
+        res.status(500).send(e)
+    }
+    // User.find({}).then((result)=>{
+    //         res.status(200).send(result)
+    //     }).catch((e)=>{
+    //         res.status(500).send(e)
+    //     })
 })
 
-app.get('/users/:id',(req,res)=>{
+app.get('/users/:id',async (req,res)=>{
     const _id = req.params.id
-
-    User.findById(_id).then((result)=>{
-        if(!result){
-            return res.status('200').send(result)
+    try{
+        const val = await User.findById(_id)
+        //val check for???
+        if(!val){
+            return res.status(200).send(val)
         }
-        res.send(result)
-    }).catch((e)=>{
-        res.status('400').send(e)
-    })
+        res.send(val)
+    }
+    catch(e){
+        res.status(400).send(e)
+    }
+    // User.findById(_id).then((result)=>{
+    //     if(!result){
+    //         return res.status('200').send(result)
+    //     }
+    //     res.send(result)
+    // }).catch((e)=>{
+    //     res.status('400').send(e)
+    // })
 
 })
 
 //-----------------------------------------------task-manager-endpoints--------------------------------------
 
-app.post('/tasks',(req,res)=>{
+
+//add new task ---CREATE
+app.post('/tasks',async (req, res)=>{
     const task = new Task(req.body)
-    task.save().then((result)=>{
-            res.status(201).send(result)
-        }).catch((e)=>{
-            res.status(400).send(e)
-        })
+
+    try{
+        await task.save()
+        res.status(201).send(task)
+    }   
+    catch (e){
+        res.status(400).send(e)
+    }
 })
 
 
-//query to list all the docs
+//list all tasks -- READ-ALL
 app.get('/tasks', (req,res)=>{
-    User.find({}).then((result)=>{
-        res.send(result)
-    }).catch((e)=>{
-        res.send(e)
-    })
+    try{
+        const task = Task.find({})
+        res.status(201).send(task)
+    }
+    catch (e){
+        res.status(400).send(e)
+    }
+
 })
 
+//search for specific doc -- READ-ONE
 app.get('/tasks/:id', (req,res)=>{
     
     const _id = req.params.id
-    User.findById(_id).then((result)=>{
-        if(!result){
-            return res.status('404').send(result)
+    try{
+        const task = Task.findById(_id)
+        if(!task){
+            return res.status(404).send(task)
         }
-        res.send(result)
+        res.status(200).send(task)
+    }
+    catch(e){
+        res.status(500).send(e)
+    }
+    
+})
+
+app.get('/tasks/delete/:id',(req,res)=>{
+    const _id = req.params.id
+    Task.findByIdAndDelete(_id).then((result)=>{
+        res.render(result)
+        return Task.countDocuments({completed: false})
+    }).then((result)=>{
+        res.render(result)
     }).catch((e)=>{
-        res.send(e)
+        res.render(e)
     })
 })
 
