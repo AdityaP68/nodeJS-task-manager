@@ -1,14 +1,16 @@
 const express = require('express')
+const { findOne } = require('../models/User')
 const User = require('../models/User')
 const router = new express.Router()
 
 
 router.post('/users',async (req, res)=>{
     const user = new User(req.body)
+    const token = await user.generateAuthToken()
 
     try{
         await user.save()
-        res.status(201).send(user)
+        res.status(201).send({user,token})
     }   
     catch (e){
         res.status(400).send(e)
@@ -130,6 +132,23 @@ router.delete('/users/:id',async (req,res)=>{
 
 })
 
+//login end-point
+router.post('/users/login',async (req, res)=>{
+    try{
+        const user = await User.findByCredentials(req.body.email, req.body.password)
+        //here it wont work on User as this method isnt ment for the collection but for an individual unique user
+        //thus the method lives on the user instance
+        const token = await user.generateAuthToken()
+        res.send({
+            user,token
+        })
+
+    }
+    catch (e){
+        res.status(500).send(e)
+    }
+
+})
 
 
 module.exports = router
